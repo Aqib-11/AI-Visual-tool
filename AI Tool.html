@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="DCR Story Studio — find confirmed public-domain visuals and real old-newspaper stories for your videos, with AI relevance and safety checks.">
+<title>DCR Story Studio — free visuals &amp; old stories for creators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFFDF6; --card:#FFFFFF; --ink:#1F2433; --mut:#5A6273; --faint:#8A92A3;
+    --line:#E9E4D8; --cobalt:#2F5BEA; --cobalt-soft:#EBF0FF; --sun:#FFC53D; --sun-soft:#FFF4D6;
+    --rose:#FF5D8F; --rose-soft:#FFE9F1; --leaf:#18A058; --leaf-soft:#E3F6EC;
+    --amber:#B45309; --amber-soft:#FDF0DC; --shadow:0 10px 28px rgba(47,91,234,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Inter,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  button{font-family:inherit}
+  :focus-visible{outline:3px solid var(--cobalt);outline-offset:2px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+  /* ============ NAV ============ */
+  nav{position:sticky;top:0;z-index:40;background:rgba(255,253,246,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nin{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0}
+  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+  .mark{width:36px;height:36px;flex:none}
+  .bname{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:800;font-size:18.5px}
+  .bname em{font-style:normal;color:var(--cobalt)}
+  .nlinks{display:flex;align-items:center;gap:4px}
+  .nlink{padding:8px 14px;font-size:14px;font-weight:600;color:var(--mut);text-decoration:none;border-radius:999px}
+  .nlink:hover{color:var(--cobalt);background:var(--cobalt-soft)}
+  @media(max-width:760px){.nlinks .nlink{display:none}}
+  .aibtn{display:flex;align-items:center;gap:8px;padding:9px 16px;font-size:13.5px;font-weight:700;border-radius:999px;border:2px solid var(--rose-soft);background:var(--rose-soft);color:#C2255C;cursor:pointer;transition:.15s}
+  .aibtn:hover{border-color:var(--rose)}
+  .aibtn .dot{width:9px;height:9px;border-radius:50%;background:#E3B7C6}
+  .aibtn.on .dot{background:var(--leaf)}
+
+  /* ============ HERO ============ */
+  .hero{position:relative;overflow:hidden;
+    background:
+      radial-gradient(600px 340px at 8% -10%, var(--cobalt-soft), transparent 70%),
+      radial-gradient(520px 320px at 96% 6%, var(--rose-soft), transparent 70%),
+      radial-gradient(640px 380px at 70% 110%, var(--sun-soft), transparent 72%),
+      var(--paper)}
+  .hin{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;padding:64px 0 58px}
+  @media(max-width:900px){.hin{grid-template-columns:1fr;padding:46px 0 40px}}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--amber);background:var(--sun-soft);padding:7px 14px;border-radius:999px;margin-bottom:18px}
+  .hero h1{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:800;font-size:clamp(34px,5vw,56px);line-height:1.08;letter-spacing:-.5px}
+  .hl{position:relative;white-space:nowrap}
+  .hl i{position:absolute;left:-5px;right:-8px;bottom:5px;height:.5em;background:var(--sun);z-index:-1;border-radius:5px;transform:skew(-6deg);transform-origin:left;animation:swipe .7s .2s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes swipe{from{transform:skew(-6deg) scaleX(0)}to{transform:skew(-6deg) scaleX(1)}}
+  .hero .sub{margin-top:16px;font-size:17px;color:var(--mut);max-width:540px}
+  .ctas{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+  .cta{padding:15px 28px;font-size:15.5px;font-weight:700;border-radius:999px;cursor:pointer;text-decoration:none;display:inline-block;transition:.15s}
+  .cta.p{background:var(--cobalt);color:#fff;border:0;box-shadow:var(--shadow)}
+  .cta.p:hover{background:#2448C8;transform:translateY(-1px)}
+  .cta.s{background:#fff;color:var(--amber);border:2px solid var(--sun)}
+  .cta.s:hover{background:var(--sun-soft)}
+  .trust{margin-top:18px;font-size:13px;color:var(--faint)}
+
+  /* polaroid collage */
+  .collage{position:relative;height:360px}
+  @media(max-width:900px){.collage{display:none}}
+  .pol{position:absolute;background:#fff;border-radius:10px;box-shadow:0 18px 40px rgba(31,36,51,.16);padding:10px 10px 34px}
+  .pol .ph{border-radius:6px;display:block}
+  .pol .cap{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-family:"Bricolage Grotesque",Inter,sans-serif;font-size:12.5px;color:#7a6f57}
+  .tape{position:absolute;width:74px;height:22px;background:var(--sun);opacity:.85;border-radius:3px;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg)}
+  .p1{top:16px;left:6%;transform:rotate(-7deg);z-index:1}
+  .p2{top:66px;left:40%;transform:rotate(4deg);z-index:3}
+  .p3{top:150px;left:16%;transform:rotate(-2deg);z-index:2}
+  .pol:hover{z-index:5}
+
+  /* ============ FEATURES ============ */
+  .feats{padding:52px 0 10px}
+  .feats h2, .how h2{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:800;font-size:clamp(24px,3vw,32px);margin-bottom:26px}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .feat{border-radius:18px;padding:22px 20px;border:2px solid transparent}
+  .feat .fi{font-size:26px}
+  .feat h3{font-family:"Bricolage Grotesque",Inter,sans-serif;font-size:17px;margin:10px 0 6px}
+  .feat p{font-size:13.5px;color:var(--mut)}
+  .f-green{background:var(--leaf-soft)} .f-blue{background:var(--cobalt-soft)}
+  .f-pink{background:var(--rose-soft)} .f-sun{background:var(--sun-soft)}
+
+  /* ============ APP FRAME ============ */
+  .toolsec{padding:54px 0 26px}
+  .appframe{background:var(--card);border:2px solid var(--line);border-radius:22px;box-shadow:0 24px 60px rgba(31,36,51,.08);overflow:hidden}
+  .chromebar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#FFFDF6,#fff)}
+  .cdot{width:11px;height:11px;border-radius:50%}
+  .cd1{background:#FF6B6B}.cd2{background:var(--sun)}.cd3{background:var(--leaf)}
+  .curl{margin-left:10px;font-size:12.5px;color:var(--faint);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+  .appin{padding:24px 22px 30px}
+  @media(max-width:700px){.appin{padding:18px 14px 24px}}
+
+  .tabs{display:flex;gap:10px;margin-bottom:20px}
+  .tab{padding:11px 22px;font-size:15px;font-weight:700;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--cobalt)}
+  .tab.on{background:var(--cobalt);border-color:var(--cobalt);color:#fff;box-shadow:var(--shadow)}
+  #tabSt.on{background:var(--amber);border-color:var(--amber)}
+
+  .storybox{background:var(--paper);border:2px solid var(--rose-soft);border-radius:18px;padding:17px;margin-bottom:20px}
+  .slabel{display:inline-block;font-weight:700;font-size:13.5px;color:#C2255C;background:var(--rose-soft);padding:4px 12px;border-radius:999px;margin-bottom:10px}
+  .storybox textarea{width:100%;background:#FFF;border:2px solid var(--line);border-radius:12px;color:var(--ink);font-size:14.5px;font-family:inherit;padding:12px 14px;resize:vertical;min-height:54px}
+  .storybox textarea:focus{outline:0;border-color:var(--rose)}
+  .srow{display:flex;gap:9px;margin-top:11px;flex-wrap:wrap;align-items:center}
+  .sbtn{padding:9px 15px;font-size:13px;font-weight:700;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.15s}
+  .sbtn:hover{border-color:var(--cobalt);color:var(--cobalt)}
+  .sbtn.ai{border-color:var(--rose-soft);background:var(--rose-soft);color:#C2255C}
+  .sbtn.ai:hover{border-color:var(--rose)}
+  .hint{font-size:12.5px;color:var(--faint)}
+
+  .searchrow{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .sbox{flex:1;min-width:250px;position:relative}
+  .sbox input{width:100%;padding:14px 16px 14px 46px;font-size:16px;color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:14px;transition:.15s}
+  .sbox input:focus{outline:0;border-color:var(--cobalt);box-shadow:var(--shadow);background:#fff}
+  .sbox svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;stroke:var(--faint)}
+  .btn{padding:14px 28px;font-size:15.5px;font-weight:700;color:#fff;background:var(--cobalt);border:0;border-radius:14px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+  .btn:hover{background:#2448C8}
+  .btn:disabled{opacity:.5}
+  #sgo{background:var(--amber)}
+  #sgo:hover{background:#92400E}
+  .smart{font-size:13px;color:var(--faint);margin:2px 0 12px 2px;min-height:18px}
+  .smart b{color:var(--cobalt)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .chip{padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:.12s}
+  .chip:hover{border-color:var(--cobalt);color:var(--cobalt);transform:rotate(-1deg)}
+  .chip.recent{border-style:dashed}
+  .chip.aichip{background:var(--rose-soft);border-color:var(--rose-soft);color:#C2255C}
+  .chip.aichip:hover{border-color:var(--rose)}
+
+  .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:17px}
+  .seg{display:inline-flex;background:#fff;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+  .seg button{padding:9px 16px;font-size:13px;font-weight:700;color:var(--mut);background:none;border:0;cursor:pointer}
+  .seg button.on{background:var(--leaf-soft);color:#0B7A3E}
+  .seg button[data-f="cc"].on{background:var(--cobalt-soft);color:var(--cobalt)}
+  .seg button[data-f="all"].on{background:var(--sun-soft);color:var(--amber)}
+  .meta{font-size:13.5px;color:var(--mut)} .meta b{color:var(--ink)}
+  .selbar{display:none;align-items:center;gap:9px;flex-wrap:wrap}
+  .selbar.show{display:inline-flex}
+  .mini{padding:9px 14px;font-size:13px;font-weight:700;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.12s}
+  .mini:hover{border-color:var(--cobalt)}
+  .mini.go{background:var(--leaf);border-color:var(--leaf);color:#fff}
+  .mini.go:hover{background:#0E7C42}
+  .mini.ai{background:var(--rose-soft);border-color:var(--rose-soft);color:#C2255C}
+  .mini.ai:hover{border-color:var(--rose)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:18px}
+  .card{position:relative;background:#fff;border:2px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:transform .14s,border-color .14s,box-shadow .14s}
+  .card:hover{transform:translateY(-3px) rotate(-.3deg);border-color:var(--cobalt);box-shadow:var(--shadow)}
+  .rank{position:absolute;top:10px;right:10px;z-index:2;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--sun);color:#7A4E00}
+  .aiscore{position:absolute;top:10px;right:10px;z-index:3;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--rose);color:#fff}
+  .pick{position:absolute;top:10px;left:10px;z-index:2;width:21px;height:21px;accent-color:var(--leaf);cursor:pointer}
+  .thumbbox{height:182px;background:#F1EEE4;cursor:zoom-in}
+  .thumbbox img{width:100%;height:100%;object-fit:cover;display:block}
+  .cb{padding:12px 13px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .badges{display:flex;gap:6px;flex-wrap:wrap}
+  .badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .b-pd{color:#0B7A3E;background:var(--leaf-soft)}
+  .b-cc{color:var(--cobalt);background:var(--cobalt-soft)}
+  .b-x{color:var(--amber);background:var(--amber-soft)}
+  .b-src{color:var(--mut);background:var(--paper);border:1px solid var(--line)}
+  .ct{font-size:13px;color:var(--ink);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dim{font-size:11.5px;color:var(--faint)}
+  .row{display:flex;gap:7px;margin-top:auto}
+  .dl{flex:1;text-align:center;padding:10px;font-size:13px;font-weight:700;color:#fff;background:var(--leaf);border:0;border-radius:999px;cursor:pointer}
+  .dl:hover{background:#0E7C42}
+  .src{padding:10px 13px;font-size:12.5px;font-weight:600;color:var(--mut);background:#fff;border:2px solid var(--line);border-radius:999px;cursor:pointer;text-decoration:none;transition:.12s}
+  .src:hover{color:var(--cobalt);border-color:var(--cobalt)}
+
+  .sfilters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;align-items:center}
+  .sfilters select,.sfilters input{padding:11px 13px;font-size:14px;background:#fff;color:var(--ink);border:2px solid var(--line);border-radius:12px}
+  .sfilters select:focus,.sfilters input:focus{outline:0;border-color:var(--amber)}
+  .story{background:#fff;border:2px solid var(--line);border-left:6px solid var(--sun);border-radius:16px;padding:16px 18px;margin-bottom:14px;transition:.14s}
+  .story:hover{border-color:var(--amber);border-left-color:var(--amber);box-shadow:0 10px 24px rgba(180,83,9,.09)}
+  .sthead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+  .stpaper{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:700;font-size:15.5px;color:var(--amber)}
+  .stdate{font-size:12.5px;color:var(--faint)}
+  .stsnip{font-size:14px;color:#3C4354;line-height:1.65}
+  .stsnip mark{background:var(--sun);color:#5A3A00;padding:0 4px;border-radius:4px}
+  .strow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+  .status{text-align:center;padding:56px 20px;color:var(--mut);font-size:15px}
+  .status.err{color:var(--amber)}
+  .spin{width:26px;height:26px;margin:0 auto 14px;border:3px solid var(--line);border-top-color:var(--cobalt);border-radius:50%;animation:rot .8s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  /* ============ HOW ============ */
+  .how{padding:40px 0 20px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .step{background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px}
+  .snum{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;margin-bottom:12px;font-family:"Bricolage Grotesque",Inter,sans-serif}
+  .s1 .snum{background:var(--amber)} .s2 .snum{background:var(--cobalt)} .s3 .snum{background:var(--leaf)}
+  .step h3{font-family:"Bricolage Grotesque",Inter,sans-serif;font-size:16.5px;margin-bottom:6px}
+  .step p{font-size:13.5px;color:var(--mut)}
+
+  /* ============ LIGHTBOX / MODAL / FOOTER / TOAST ============ */
+  .lb{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(31,36,51,.55);backdrop-filter:blur(3px);padding:24px}
+  .lb.show{display:flex}
+  .lbin{max-width:960px;width:100%;max-height:93vh;display:flex;flex-direction:column;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px rgba(31,36,51,.3)}
+  .lbimg{flex:1;min-height:180px;background:#F1EEE4;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .lbimg img{max-width:100%;max-height:56vh;object-fit:contain}
+  .lbmeta{padding:15px 18px 17px;display:flex;flex-direction:column;gap:9px}
+  .lbtitle{font-family:"Bricolage Grotesque",Inter,sans-serif;font-size:16.5px;font-weight:700}
+  .lbsub{font-size:13px;color:var(--mut)}
+  .lbai{font-size:13.5px;color:#7A2048;background:var(--rose-soft);border-radius:12px;padding:11px 14px;display:none;white-space:pre-wrap}
+  .lbrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px}
+  .lbx{position:absolute;top:16px;right:22px;font-size:34px;color:#fff;background:none;border:0;cursor:pointer;line-height:1}
+
+  .modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(31,36,51,.55);backdrop-filter:blur(3px);padding:22px}
+  .modal.show{display:flex}
+  .min{max-width:530px;width:100%;background:#fff;border-radius:20px;padding:24px 24px 20px;box-shadow:0 30px 70px rgba(31,36,51,.3)}
+  .min h3{font-family:"Bricolage Grotesque",Inter,sans-serif;font-size:19px;margin-bottom:7px;color:#C2255C}
+  .min p{font-size:13.5px;color:var(--mut);margin-bottom:12px}
+  .min ol{font-size:13.5px;color:var(--ink);margin:0 0 14px 20px;line-height:1.9}
+  .min input{width:100%;padding:12px 14px;font-size:14.5px;background:#fff;border:2px solid var(--line);border-radius:12px;color:var(--ink);margin-bottom:13px}
+  .min input:focus{outline:0;border-color:var(--rose)}
+  .mrow{display:flex;gap:9px;justify-content:flex-end}
+  .mnote{font-size:12.5px;color:var(--faint);margin-top:10px}
+
+  footer{margin-top:60px;background:var(--ink);color:#C9CEDA;padding:34px 0 30px}
+  .fgridft{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:26px}
+  @media(max-width:760px){.fgridft{grid-template-columns:1fr}}
+  footer h4{font-family:"Bricolage Grotesque",Inter,sans-serif;color:#fff;font-size:15px;margin-bottom:10px}
+  footer p, footer li{font-size:13px;line-height:1.8}
+  footer ul{list-style:none}
+  footer .fb{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  footer .fb .bname{color:#fff}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13.5px;font-weight:600;padding:12px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:80;max-width:90vw;text-align:center;box-shadow:0 12px 30px rgba(31,36,51,.3)}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nin">
+    <a class="brand" href="#top">
+      <svg class="mark" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4 L42 18 L24 44 L6 18 Z" fill="#FFC53D" stroke="#1F2433" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M6 18 H42 M24 4 L16 18 L24 44 L32 18 L24 4" stroke="#1F2433" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <span class="bname">DCR <em>Story Studio</em></span>
+    </a>
+    <div class="nlinks">
+      <a class="nlink" href="#tool" data-tab="images">Find images</a>
+      <a class="nlink" href="#tool" data-tab="stories">Old stories</a>
+      <a class="nlink" href="#how">How it works</a>
+    </div>
+    <button class="aibtn" id="aibtn"><span class="dot" id="aidot"></span><span id="ailabel">AI: setup</span></button>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="wrap hin">
+    <div>
+      <span class="kicker">📰 For story-video creators</span>
+      <h1>Old stories &amp;<br><span class="hl">free visuals<i></i></span>, ready for your videos.</h1>
+      <p class="sub">Search real archives, see the licence verified on every single image, and let AI match each find to your story — then download everything with one click.</p>
+      <div class="ctas">
+        <a class="cta p" href="#tool" data-tab="images">Start finding images</a>
+        <a class="cta s" href="#tool" data-tab="stories">Browse old newspapers</a>
+      </div>
+      <div class="trust">Free to use. Sources: Wikimedia Commons, Wikipedia, Library of Congress, Chronicling America.</div>
+    </div>
+
+    <div class="collage" aria-hidden="true">
+      <div class="pol p1">
+        <span class="tape"></span>
+        <svg class="ph" width="190" height="150" viewBox="0 0 190 150"><rect width="190" height="150" fill="#E7D8B8"/><circle cx="95" cy="62" r="30" fill="#A98B5F"/><path d="M40 150 Q95 88 150 150 Z" fill="#A98B5F"/><rect width="190" height="150" fill="none" stroke="#C9B98F" stroke-width="3"/></svg>
+        <span class="cap">The banker, 1872</span>
+      </div>
+      <div class="pol p2">
+        <span class="tape" style="background:var(--rose);opacity:.7"></span>
+        <svg class="ph" width="210" height="150" viewBox="0 0 210 150"><rect width="210" height="150" fill="#DCE6D5"/><path d="M0 110 L55 60 L95 95 L140 45 L210 115 L210 150 L0 150 Z" fill="#8FA882"/><circle cx="165" cy="38" r="16" fill="#F2E3AE"/><rect width="210" height="150" fill="none" stroke="#BCCAB2" stroke-width="3"/></svg>
+        <span class="cap">Diamond Peak, Colorado</span>
+      </div>
+      <div class="pol p3">
+        <span class="tape" style="background:var(--cobalt);opacity:.55"></span>
+        <svg class="ph" width="200" height="140" viewBox="0 0 200 140"><rect width="200" height="140" fill="#F3EBD8"/><rect x="16" y="14" width="168" height="10" fill="#6B5E43"/><rect x="16" y="32" width="120" height="7" fill="#9A8C6B"/><rect x="16" y="46" width="168" height="4" fill="#C9BC99"/><rect x="16" y="56" width="168" height="4" fill="#C9BC99"/><rect x="16" y="66" width="140" height="4" fill="#C9BC99"/><rect x="16" y="82" width="76" height="44" fill="#D9CBA4"/><rect x="104" y="82" width="80" height="4" fill="#C9BC99"/><rect x="104" y="92" width="80" height="4" fill="#C9BC99"/><rect x="104" y="102" width="62" height="4" fill="#C9BC99"/><rect width="200" height="140" fill="none" stroke="#D5C9A8" stroke-width="3"/></svg>
+        <span class="cap">“Diamond Fiasco!” — Nov 1872</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feats">
+  <div class="wrap">
+    <h2>Everything a faceless channel needs</h2>
+    <div class="fgrid">
+      <div class="feat f-green"><div class="fi">🛡️</div><h3>Licences, verified</h3><p>Every image's licence is read live from the source. Public Domain shows first — no copyright surprises.</p></div>
+      <div class="feat f-blue"><div class="fi">🏛️</div><h3>Real archives</h3><p>Wikimedia Commons, Wikipedia article photos and the Library of Congress, searched together.</p></div>
+      <div class="feat f-pink"><div class="fi">✨</div><h3>AI story-match</h3><p>Write your story once — AI suggests searches, scores every image and flags anything risky for YouTube.</p></div>
+      <div class="feat f-sun"><div class="fi">📰</div><h3>Old-newspaper stories</h3><p>Dig through scanned papers from 1770–1963 and pull untold stories straight into your pipeline.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="toolsec" id="tool">
+  <div class="wrap">
+    <div class="appframe">
+      <div class="chromebar">
+        <span class="cdot cd1"></span><span class="cdot cd2"></span><span class="cdot cd3"></span>
+        <span class="curl">dcr-story-studio · live tool</span>
+      </div>
+      <div class="appin">
+
+        <div class="tabs">
+          <button class="tab on" data-t="images" id="tabImg">🖼 Images</button>
+          <button class="tab" data-t="stories" id="tabSt">📰 Old Stories</button>
+        </div>
+
+        <div class="storybox">
+          <span class="slabel">🎬 Your story</span>
+          <textarea id="story" placeholder="e.g. The Great Diamond Hoax of 1872 — two prospectors fooled San Francisco bankers with a fake diamond field in Wyoming…"></textarea>
+          <div class="srow">
+            <button class="sbtn ai" id="aiKeywords">✨ Suggest searches from my story</button>
+            <button class="sbtn" id="ytStory">▶ Check story on YouTube</button>
+            <span class="hint" id="storyHint"></span>
+          </div>
+        </div>
+
+        <!-- IMAGES PANE -->
+        <div id="paneImages">
+          <div class="searchrow">
+            <div class="sbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="q" type="text" placeholder="A person, place or event — e.g. Clarence King" autocomplete="off">
+            </div>
+            <button class="btn" id="go">Search images</button>
+          </div>
+          <div class="smart" id="smart">Sources: Wikimedia Commons, Wikipedia article photos, Library of Congress — best match first</div>
+          <div class="chips" id="chips"></div>
+
+          <div class="controls">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div class="seg" id="seg">
+                <button data-f="pd" class="on">🟢 Public Domain <span id="nPd"></span></button>
+                <button data-f="cc">🔵 CC <span id="nCc"></span></button>
+                <button data-f="all">Everything <span id="nAll"></span></button>
+              </div>
+              <span class="meta" id="count"></span>
+            </div>
+            <div class="selbar" id="selbar">
+              <button class="mini ai" id="aiRank">✨ Match with my story</button>
+              <span class="meta"><b id="selN">0</b> selected</span>
+              <button class="mini" id="selAll">Select all</button>
+              <button class="mini" id="selNone">Clear</button>
+              <button class="mini go" id="dlSel">⬇ Download selected</button>
+            </div>
+          </div>
+
+          <div class="grid" id="grid"></div>
+          <div class="status" id="status">Write your story above, then search here — or let ✨ AI suggest the searches. 🔎</div>
+        </div>
+
+        <!-- STORIES PANE -->
+        <div id="paneStories" style="display:none">
+          <div class="searchrow">
+            <div class="sbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="sq" type="text" placeholder='A dramatic phrase — e.g. mysterious disappearance' autocomplete="off">
+            </div>
+            <button class="btn" id="sgo">Find stories</button>
+          </div>
+          <div class="sfilters">
+            <select id="sstate">
+              <option value="">All states</option>
+              <option>Kansas</option><option>Montana</option><option>Nebraska</option><option>Colorado</option>
+              <option>California</option><option>Texas</option><option>Ohio</option><option>New York</option>
+              <option>Missouri</option><option>Kentucky</option><option>Arizona</option><option>Nevada</option>
+            </select>
+            <input id="sy1" type="number" value="1860" min="1770" max="1963" style="width:94px" title="From year">
+            <input id="sy2" type="number" value="1925" min="1770" max="1963" style="width:94px" title="To year">
+            <span class="hint">Real scanned US newspapers, 1770–1963</span>
+          </div>
+          <div class="chips" id="schips"></div>
+          <div id="slist"></div>
+          <div class="status" id="sstatus">Pick a dramatic phrase — real stories from old newspapers will appear. 📰</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step s1"><span class="snum">1</span><h3>Find a story</h3><p>Search old newspapers for a dramatic phrase, pick an untold story, and add it to your story box with one click.</p></div>
+      <div class="step s2"><span class="snum">2</span><h3>Collect visuals</h3><p>AI turns your story into smart searches. Every result shows a verified licence — Public Domain first, always.</p></div>
+      <div class="step s3"><span class="snum">3</span><h3>Download &amp; create</h3><p>Select the images you like and download them all at once, with credits copied where needed. Straight into your edit.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fgridft">
+    <div>
+      <div class="fb">
+        <svg class="mark" width="30" height="30" viewBox="0 0 48 48" fill="none">
+          <path d="M24 4 L42 18 L24 44 L6 18 Z" fill="#FFC53D" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+        </svg>
+        <span class="bname">DCR <em style="color:#FFC53D;font-style:normal">Story Studio</em></span>
+      </div>
+      <p>Confirmed-free visuals and real old-newspaper stories for creators. Built for the DCR Efficient project.</p>
+    </div>
+    <div>
+      <h4>Licences</h4>
+      <ul>
+        <li>🟢 Public Domain / CC0 — use freely</li>
+        <li>🔵 CC — free, copy the credit (⧉)</li>
+        <li>🟡 Unverified — shown under “Everything” only</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Good to know</h4>
+      <ul>
+        <li>AI runs on your own free Gemini key, saved only in your browser.</li>
+        <li>AI flags risks — the final pick is always yours.</li>
+        <li>Sources: Wikimedia, Wikipedia, LoC, Chronicling America.</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<!-- lightbox -->
+<div class="lb" id="lb">
+  <button class="lbx" id="lbx">×</button>
+  <div class="lbin">
+    <div class="lbimg"><img id="lbimg" alt=""></div>
+    <div class="lbmeta">
+      <div class="lbtitle" id="lbt"></div>
+      <div class="lbsub" id="lbs"></div>
+      <div class="lbai" id="lbai"></div>
+      <div class="lbrow">
+        <button class="dl" style="flex:none;padding:10px 22px" id="lbdl">⬇ Download</button>
+        <button class="src" id="lbaiBtn">✨ AI check: story-match + safety</button>
+        <button class="src" id="lbyt">▶ YouTube check</button>
+        <a class="src" id="lbsrc" target="_blank" rel="noopener">Source ⧉</a>
+        <button class="src" id="lbcr" style="display:none">⧉ Copy credit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI key modal -->
+<div class="modal" id="modal">
+  <div class="min">
+    <h3>✨ AI setup — free Google Gemini key</h3>
+    <p>AI features (search suggestions, story-match scores, safety checks) run on your own free key. It is saved <b>only in this browser</b> and sent nowhere except Google.</p>
+    <ol>
+      <li>Open <b>aistudio.google.com</b> and sign in with Google</li>
+      <li>Click <b>Get API key</b>, then <b>Create API key</b></li>
+      <li>Copy the key and paste it below</li>
+    </ol>
+    <input id="keyIn" type="password" placeholder="Paste your Gemini API key (AIza…)">
+    <div class="mrow">
+      <button class="mini" id="keyCancel">Cancel</button>
+      <button class="mini" id="keyClear">Remove key</button>
+      <button class="mini go" id="keySave">Save &amp; test</button>
+    </div>
+    <div class="mnote" id="keyMsg"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const COMMONS = 'https://commons.wikimedia.org/w/api.php';
+  const WIKI = 'https://en.wikipedia.org/w/api.php';
+  const LOC = 'https://www.loc.gov/photos/';
+  const CHRON = 'https://chroniclingamerica.loc.gov/search/pages/results/';
+
+  let items = [], filter = 'pd', selected = new Set(), lbItem = null, aiKey = '';
+  try { aiKey = localStorage.getItem('dcr_gemini') || ''; } catch (e) {}
+  try { $('story').value = localStorage.getItem('dcr_story') || ''; } catch (e) {}
+
+  const DEFAULT_CHIPS = ['Clarence King','Philip Arnold 1872','William Chapman Ralston','Asbury Harpending','Bank of California','San Francisco 1870s'];
+  const STORY_CHIPS = ['mysterious disappearance','strange death','daring swindle','great hoax','buried alive','vanished without a trace','sole survivor'];
+
+  const strip = h => { const d = document.createElement('div'); d.innerHTML = h || ''; return (d.textContent || '').replace(/\s+/g,' ').trim(); };
+  const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+  function licClass(lic){
+    const n=(lic||'').toLowerCase();
+    if(/public\s*domain|^pd$|^pd[- ]|\bpd\b|cc0|no restrictions|no known copyright/.test(n)) return 'pd';
+    if(/cc[\s-]?by|creative commons|attribution/.test(n)) return 'cc';
+    return 'x';
+  }
+  function bigThumb(it){ return (it.thumb && /\/thumb\//.test(it.thumb)) ? it.thumb.replace(/\/\d+px-/,'/1280px-') : (it.full||it.thumb); }
+  function ytOpen(q){ window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank'); }
+
+  /* ---- AI ---- */
+  function aiReady(){ return !!aiKey; }
+  function refreshAiBtn(){
+    $('aidot').classList.toggle('on', aiReady());
+    $('aibtn').classList.toggle('on', aiReady());
+    $('ailabel').textContent = aiReady() ? 'AI: ready' : 'AI: setup';
+  }
+  async function gemini(parts){
+    if(!aiKey){ $('modal').classList.add('show'); throw new Error('no-key'); }
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+encodeURIComponent(aiKey),{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ contents:[{ parts }] })
+    });
+    if(!r.ok){ const t=await r.text(); throw new Error('Gemini '+r.status+': '+t.slice(0,160)); }
+    const j = await r.json();
+    return (((j.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text).join('') || '';
+  }
+  function parseJson(txt){
+    const m = txt.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if(!m) throw new Error('no-json');
+    return JSON.parse(m[0]);
+  }
+
+  $('aibtn').onclick = ()=>{ $('keyIn').value = aiKey; $('keyMsg').textContent=''; $('modal').classList.add('show'); };
+  $('keyCancel').onclick = ()=> $('modal').classList.remove('show');
+  $('keyClear').onclick = ()=>{ aiKey=''; try{localStorage.removeItem('dcr_gemini');}catch(e){} refreshAiBtn(); $('modal').classList.remove('show'); toast('AI key removed.'); };
+  $('keySave').onclick = async ()=>{
+    const k = $('keyIn').value.trim();
+    if(!k) return $('keyMsg').textContent='Paste a key first.';
+    $('keyMsg').textContent='Testing key…';
+    const old = aiKey; aiKey = k;
+    try{
+      await gemini([{text:'Reply with the single word: OK'}]);
+      try{localStorage.setItem('dcr_gemini',k);}catch(e){}
+      refreshAiBtn(); $('modal').classList.remove('show'); toast('✓ AI connected!');
+    }catch(e){ aiKey = old; $('keyMsg').textContent='❌ Key test failed — check the key and try again.'; }
+  };
+
+  $('story').addEventListener('input', ()=>{ try{localStorage.setItem('dcr_story',$('story').value);}catch(e){} });
+  $('ytStory').onclick = ()=>{ const s=$('story').value.trim(); if(!s) return toast('Write your story first.'); ytOpen(s.split(/\s+/).slice(0,8).join(' ')); };
+
+  $('aiKeywords').onclick = async ()=>{
+    const s = $('story').value.trim();
+    if(!s) return toast('Write your story in the box first.');
+    $('storyHint').textContent = '✨ AI thinking…';
+    try{
+      const out = await gemini([{text:
+        'You help a documentary YouTube creator find archival images. Story: "'+s+'".\n'+
+        'Return ONLY a JSON array of 8 short image-search keywords (people full names, places with era, objects, newspapers). English only. Example: ["Clarence King","San Francisco 1870s"]'}]);
+      const arr = parseJson(out).slice(0,8);
+      drawChips(arr);
+      $('storyHint').textContent = '✓ AI searches ready — tap a pink chip.';
+      toast('✨ '+arr.length+' smart searches created.');
+    }catch(e){ $('storyHint').textContent=''; if(e.message!=='no-key') toast('AI error — try again.'); }
+  };
+
+  $('aiRank').onclick = async ()=>{
+    const s = $('story').value.trim();
+    if(!s) return toast('The story box is empty — write your story first.');
+    const list = visible().slice(0,30);
+    if(!list.length) return toast('Search for images first.');
+    toast('✨ AI checking '+list.length+' images…');
+    try{
+      const out = await gemini([{text:
+        'Story: "'+s+'".\nBelow are image titles (index: title). For EACH index give relevance 0-10 to this story, and "risk":true only if the image likely shows a living/modern person, a brand/logo, or graphic content (YouTube risk). Return ONLY JSON like {"0":{"r":9,"risk":false},...}\n'+
+        list.map((it,i)=> i+': '+it.title).join('\n')}]);
+      const map = parseJson(out);
+      list.forEach((it,i)=>{ const v=map[i]||map[String(i)]; if(v){ it.ai = typeof v.r==='number'? v.r : null; it.aiRisk = !!v.risk; } });
+      items.sort((a,b)=> ( (b.ai??-1)-(a.ai??-1) ) || (b.score-a.score));
+      render();
+      toast('✓ AI scores added — sorted by match with your story.');
+    }catch(e){ if(e.message!=='no-key') toast('AI error — try again in a moment.'); }
+  };
+
+  /* ---- image search ---- */
+  function analyse(q){ return { person: /^[A-Z][a-zA-Z.'-]+(\s[A-Z][a-zA-Z.'-]+){1,3}$/.test(q.trim()) && !/\d/.test(q) }; }
+
+  function scoreIt(it,q,tokens,person){
+    const t = it.title.toLowerCase(); let s = 0;
+    tokens.forEach(w=>{ if(w.length>2 && t.includes(w)) s+=3; });
+    if(tokens.length>1 && t.includes(q)) s+=4;
+    if(it.srcBoost) s+=6;
+    if(person && /portrait|photograph|photo|carte|cabinet|bust/.test(t)) s+=2;
+    if(/\b(17\d\d|18\d\d|19[0-3]\d)\b/.test(t)) s+=1;
+    if(/\b(map|logo|diagram|seal|coat of arms|flag|locator|chart|template|icon|banner|screenshot|stamp|signature)\b/.test(t)) s-=4;
+    if(it.w>=1000) s+=1; if(it.w>=2200) s+=1;
+    if(it.lclass==='pd') s+=2;
+    return s;
+  }
+
+  async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(r.status); return r.json(); }
+
+  async function commonsSearch(search){
+    const j = await jget(COMMONS+'?action=query&format=json&origin=*&generator=search&gsrsearch='+encodeURIComponent(search)+'&gsrnamespace=6&gsrlimit=40&prop=imageinfo&iiprop=url|extmetadata|mime|size&iiurlwidth=400');
+    return j.query&&j.query.pages ? Object.values(j.query.pages) : [];
+  }
+
+  async function wikipediaArticleImages(q){
+    const s = await jget(WIKI+'?action=query&format=json&origin=*&list=search&srsearch='+encodeURIComponent(q)+'&srlimit=1');
+    const hit = s.query&&s.query.search&&s.query.search[0];
+    if(!hit) return [];
+    const im = await jget(WIKI+'?action=query&format=json&origin=*&prop=images&imlimit=40&pageids='+hit.pageid);
+    const page = im.query&&im.query.pages&&im.query.pages[hit.pageid];
+    const files = (page&&page.images||[]).map(x=>x.title)
+      .filter(t=>/\.(jpe?g|png|gif)$/i.test(t) && !/commons-logo|wiki|icon|question|edit|padlock|ambox|symbol/i.test(t))
+      .slice(0,30);
+    if(!files.length) return [];
+    const info = await jget(COMMONS+'?action=query&format=json&origin=*&prop=imageinfo&iiprop=url|extmetadata|mime|size&iiurlwidth=400&titles='+encodeURIComponent(files.join('|')));
+    const pages = info.query&&info.query.pages ? Object.values(info.query.pages) : [];
+    pages.forEach(p=>{ p._fromArticle = hit.title; });
+    return pages;
+  }
+
+  async function locSearch(q){
+    try{
+      const j = await jget(LOC+'?q='+encodeURIComponent(q)+'&fo=json&c=20&at=results');
+      return (j.results||[]).filter(r=>r.image_url&&r.image_url.length).map(r=>{
+        const rights = ([].concat(r.rights||[]).join(' ') + ' ' + [].concat(r.rights_advisory||[]).join(' ')).trim();
+        const free = /no known restrictions|public domain/i.test(rights);
+        const imgs = r.image_url;
+        return {
+          id: 'loc_'+(r.id||Math.random()),
+          title: strip(Array.isArray(r.title)? r.title[0] : r.title) || 'Library of Congress item',
+          thumb: imgs[Math.min(1,imgs.length-1)],
+          full: imgs[imgs.length-1],
+          w: 0,h: 0,
+          lic: free ? 'No known restrictions (LoC)' : (rights? rights.slice(0,60) : 'Rights not stated — check'),
+          lclass: free ? 'pd' : 'x',
+          artist: '', source: 'LoC',
+          page: (typeof r.id==='string' && r.id.indexOf('http')===0) ? r.id : 'https://www.loc.gov'+(r.id||''),
+          score: 0, ai:null, aiRisk:false
+        };
+      });
+    }catch(e){ return []; }
+  }
+
+  async function search(){
+    const raw = $('q').value.trim(); if(!raw) return;
+    const q = raw.toLowerCase(), tokens = q.split(/\s+/), person = analyse(raw).person;
+    $('smart').innerHTML = person
+      ? 'Smart Match: <b>person detected</b> — Wikipedia article photos boosted, portraits up, licences verified.'
+      : 'Smart Match: ranking by relevance — licences verified from source metadata.';
+    $('status').style.display='block'; $('status').className='status';
+    $('status').innerHTML='<div class="spin"></div>Searching 3 sources &amp; verifying licences…';
+    $('grid').innerHTML=''; $('count').textContent=''; selected.clear(); updateSel();
+
+    const queries=[raw]; if(tokens.length>1) queries.push('"'+raw+'"'); if(person) queries.push(raw+' portrait');
+
+    let commonsPages=[], wikiPages=[], locItems=[];
+    const res = await Promise.allSettled([
+      Promise.all(queries.map(commonsSearch)).then(a=>a.flat()),
+      wikipediaArticleImages(raw),
+      locSearch(raw)
+    ]);
+    if(res[0].status==='fulfilled') commonsPages=res[0].value;
+    if(res[1].status==='fulfilled') wikiPages=res[1].value;
+    if(res[2].status==='fulfilled') locItems=res[2].value;
+    if(res[0].status==='rejected' && res[1].status==='rejected'){
+      $('status').className='status err';
+      $('status').innerHTML='Could not reach the archives. Check your internet connection and search again.';
+      return;
+    }
+
+    const seen={}; const merged=[];
+    wikiPages.concat(commonsPages).forEach(p=>{
+      if(!p||!p.pageid||seen['c'+p.pageid]) return; seen['c'+p.pageid]=1;
+      const ii=p.imageinfo&&p.imageinfo[0]; if(!ii||!/image\/(jpeg|png|gif)/.test(ii.mime||'')) return;
+      const m=ii.extmetadata||{};
+      const lic=(m.LicenseShortName&&m.LicenseShortName.value)||'Unknown';
+      merged.push({
+        id:'c'+p.pageid,
+        title:p.title.replace(/^File:/,'').replace(/\.(jpe?g|png|gif)$/i,''),
+        thumb:ii.thumburl||ii.url, full:ii.url, w:ii.width||0, h:ii.height||0,
+        lic, lclass:licClass(lic),
+        artist:strip(m.Artist&&m.Artist.value),
+        source: p._fromArticle? 'Wikipedia: '+p._fromArticle : 'Commons',
+        srcBoost: !!p._fromArticle,
+        page:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(p.title.replace(/ /g,'_')),
+        score:0, ai:null, aiRisk:false
+      });
+    });
+    locItems.forEach(it=> merged.push(it));
+
+    merged.forEach(it=> it.score = scoreIt(it,q,tokens,person));
+    merged.sort((a,b)=> b.score-a.score);
+    items = merged;
+    saveRecent(raw);
+    render();
+  }
+
+  /* ---- render ---- */
+  function counts(){
+    let pd=0,cc=0;
+    items.forEach(i=>{ if(i.lclass==='pd')pd++; else if(i.lclass==='cc')cc++; });
+    return {pd,cc,all:items.length};
+  }
+  function visible(){
+    if(filter==='pd') return items.filter(i=>i.lclass==='pd');
+    if(filter==='cc') return items.filter(i=>i.lclass==='cc');
+    return items;
+  }
+  function render(){
+    const c = counts();
+    $('nPd').textContent='('+c.pd+')'; $('nCc').textContent='('+c.cc+')'; $('nAll').textContent='('+c.all+')';
+    const list = visible();
+    const g=$('grid'); g.innerHTML='';
+    if(!list.length){
+      $('status').style.display='block'; $('status').className='status';
+      $('status').innerHTML = items.length
+        ? 'Nothing in this tab — check the other tabs (counts above), or add a year or the word portrait to your search.'
+        : 'Nothing found — try different words.';
+      $('count').textContent=''; updateSel(); return;
+    }
+    $('status').style.display='none';
+    $('count').innerHTML='<b>'+list.length+'</b> images, best match first';
+
+    list.forEach((it,idx)=>{
+      const card=document.createElement('div'); card.className='card';
+      const lb = it.lclass==='pd' ? '<span class="badge b-pd">🟢 '+esc(it.lic)+'</span>'
+               : it.lclass==='cc' ? '<span class="badge b-cc">🔵 '+esc(it.lic)+'</span>'
+               : '<span class="badge b-x">🟡 '+esc(it.lic.slice(0,40))+'</span>';
+      const srcb = '<span class="badge b-src">'+esc(it.source)+'</span>';
+      const aib = (it.ai!=null) ? '<span class="aiscore">✨ '+it.ai+'/10'+(it.aiRisk?' ⚠':'')+'</span>'
+                : (idx<3 ? '<span class="rank">Top match</span>' : '');
+      card.innerHTML =
+        aib +
+        '<input type="checkbox" class="pick" aria-label="Select image">' +
+        '<div class="thumbbox"><img loading="lazy" src="'+it.thumb+'" alt=""></div>' +
+        '<div class="cb"><div class="badges">'+lb+srcb+'</div>' +
+        '<div class="ct">'+esc(it.title)+'</div>' +
+        '<div class="dim">'+(it.w? it.w+' × '+it.h+' px' : '&nbsp;')+'</div>' +
+        '<div class="row"><button class="dl">⬇ Download</button>' +
+        '<a class="src" target="_blank" rel="noopener" href="'+it.page+'" title="Open source page">⧉</a></div></div>';
+      card.querySelector('.pick').checked = selected.has(it.id);
+      card.querySelector('.pick').onchange = e=>{ e.target.checked? selected.add(it.id):selected.delete(it.id); updateSel(); };
+      card.querySelector('.thumbbox').onclick = ()=> openLb(it);
+      card.querySelector('.dl').onclick = ()=> download(it);
+      g.appendChild(card);
+    });
+    updateSel();
+  }
+
+  function updateSel(){ $('selN').textContent=selected.size; $('selbar').classList.toggle('show', items.length>0); }
+  $('selAll').onclick=()=>{ visible().forEach(i=>selected.add(i.id)); render(); };
+  $('selNone').onclick=()=>{ selected.clear(); render(); };
+  $('dlSel').onclick=async ()=>{
+    const list=visible().filter(i=>selected.has(i.id));
+    if(!list.length) return toast('Tick the box on each image you want first.');
+    toast('Downloading '+list.length+' images…');
+    for(const it of list){ await download(it,true); await new Promise(r=>setTimeout(r,650)); }
+    toast('✓ Done — check your Downloads folder.');
+  };
+
+  async function download(it,silent){
+    const safe=(it.title||'image').replace(/[^\w\- ]/g,'').trim().replace(/\s+/g,'_').slice(0,70)||'image';
+    const ext=((it.full||'').match(/\.(jpe?g|png|gif)(\?|$)/i)||['.jpg'])[0].replace(/\?$/,'').toLowerCase();
+    try{
+      const r=await fetch(it.full); const b=await r.blob();
+      const u=URL.createObjectURL(b); const a=document.createElement('a');
+      a.href=u; a.download=safe+(ext.charAt(0)==='.'?ext:'.jpg');
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(u),3000);
+      if(!silent) toast('✓ Downloaded: '+safe);
+    }catch(e){ window.open(it.full,'_blank'); if(!silent) toast('Image opened — right-click it and choose “Save image as…”.'); }
+  }
+
+  /* ---- lightbox ---- */
+  function openLb(it){
+    lbItem=it;
+    $('lbimg').src=bigThumb(it);
+    $('lbt').textContent=it.title;
+    $('lbs').textContent=it.lic+'  ·  '+it.source+(it.w? '  ·  '+it.w+'×'+it.h+'px':'')+(it.artist? '  ·  '+it.artist.slice(0,70):'');
+    $('lbsrc').href=it.page;
+    $('lbcr').style.display = it.lclass==='cc'? '':'none';
+    $('lbai').style.display='none'; $('lbai').textContent='';
+    $('lb').classList.add('show');
+  }
+  $('lbx').onclick=()=> $('lb').classList.remove('show');
+  $('lb').onclick=e=>{ if(e.target===$('lb')) $('lb').classList.remove('show'); };
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('lb').classList.remove('show'); $('modal').classList.remove('show'); }});
+  $('lbdl').onclick=()=> lbItem&&download(lbItem);
+  $('lbyt').onclick=()=> lbItem&&ytOpen(lbItem.title);
+  $('lbcr').onclick=()=>{
+    if(!lbItem) return;
+    const txt=(lbItem.artist||lbItem.title)+' — '+lbItem.lic+' — via Wikimedia Commons';
+    navigator.clipboard.writeText(txt).then(()=>toast('✓ Credit copied.')).catch(()=>toast(txt));
+  };
+  $('lbaiBtn').onclick=async ()=>{
+    if(!lbItem) return;
+    const s=$('story').value.trim()||'(no story given)';
+    const box=$('lbai'); box.style.display='block'; box.textContent='✨ AI is looking…';
+    try{
+      let parts=[{text:'You advise a YouTube documentary creator. Their story: "'+s+'".\nImage title: "'+lbItem.title+'", licence: "'+lbItem.lic+'".\nIn 3 short lines answer: 1) Relevance to the story (score /10 + why). 2) YouTube-safe? (licence + content: PD/CC0 is safe; flag modern living people, brands/logos, graphic content). 3) One tip for using it in the video. Be brief.'}];
+      try{
+        const r=await fetch(lbItem.thumb); const b=await r.blob();
+        if(b.size < 900000){
+          const b64=await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result.split(',')[1]); fr.readAsDataURL(b); });
+          parts.push({inline_data:{mime_type: b.type||'image/jpeg', data: b64}});
+        }
+      }catch(e){}
+      const out=await gemini(parts);
+      box.textContent='✨ '+out.trim();
+    }catch(e){ box.style.display='none'; if(e.message!=='no-key') toast('AI check failed — try again.'); }
+  };
+
+  /* ---- filters / chips ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('#seg button'), b=>{
+    b.addEventListener('click',()=>{
+      Array.prototype.forEach.call(document.querySelectorAll('#seg button'), x=>x.classList.remove('on'));
+      b.classList.add('on'); filter=b.getAttribute('data-f'); render();
+    });
+  });
+
+  function saveRecent(q){
+    try{
+      let r=JSON.parse(localStorage.getItem('dcr_recent')||'[]');
+      r=[q].concat(r.filter(x=>x.toLowerCase()!==q.toLowerCase())).slice(0,4);
+      localStorage.setItem('dcr_recent',JSON.stringify(r));
+    }catch(e){}
+    drawChips();
+  }
+  function drawChips(aiArr){
+    const box=$('chips'); box.innerHTML='';
+    (aiArr||[]).forEach(q=> add(q,'aichip','✨ '));
+    let rec=[]; try{rec=JSON.parse(localStorage.getItem('dcr_recent')||'[]');}catch(e){}
+    rec.forEach(q=> add(q,'recent','↻ '));
+    DEFAULT_CHIPS.filter(d=>!rec.some(r=>r.toLowerCase()===d.toLowerCase())).forEach(q=>add(q,'',''));
+    function add(q,cls,pre){
+      const s=document.createElement('span'); s.className='chip '+cls; s.textContent=pre+q;
+      s.onclick=()=>{ $('q').value=q; switchTab('images'); search(); };
+      box.appendChild(s);
+    }
+  }
+
+  /* ---- stories ---- */
+  function drawStoryChips(){
+    const box=$('schips'); box.innerHTML='';
+    STORY_CHIPS.forEach(p=>{ const s=document.createElement('span'); s.className='chip'; s.textContent=p;
+      s.onclick=()=>{ $('sq').value=p; storySearch(); }; box.appendChild(s); });
+  }
+  async function storySearch(){
+    const phrase=$('sq').value.trim(); if(!phrase) return;
+    const st=$('sstate').value, y1=$('sy1').value||'1770', y2=$('sy2').value||'1963';
+    $('sstatus').style.display='block'; $('sstatus').className='status';
+    $('sstatus').innerHTML='<div class="spin"></div>Reading old newspapers…';
+    $('slist').innerHTML='';
+    let url=CHRON+'?phrasetext='+encodeURIComponent(phrase)+'&dateFilterType=yearRange&date1='+y1+'&date2='+y2+'&rows=20&format=json';
+    if(st) url+='&state='+encodeURIComponent(st);
+    try{
+      const j=await jget(url);
+      const list=j.items||[];
+      if(!list.length){ $('sstatus').innerHTML='Nothing found — change the phrase or the years.'; return; }
+      $('sstatus').style.display='none';
+      const rx=new RegExp('('+phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');
+      list.forEach(itm=>{
+        const d=(itm.date||''); const date=d? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8):'';
+        const paper=esc(itm.title||itm.title_normal||'Newspaper');
+        const state=([].concat(itm.state||[]))[0]||'';
+        let snip=strip((itm.ocr_eng||'').slice(0,2600));
+        const pos=snip.toLowerCase().indexOf(phrase.toLowerCase());
+        if(pos>120) snip='…'+snip.slice(pos-100);
+        snip=esc(snip.slice(0,420))+'…';
+        snip=snip.replace(rx,'<mark>$1</mark>');
+        const link='https://chroniclingamerica.loc.gov'+(itm.id||'');
+        const div=document.createElement('div'); div.className='story';
+        div.innerHTML='<div class="sthead"><span class="stpaper">📰 '+paper+'</span><span class="stdate">'+date+(state?', '+esc(state):'')+'</span></div>'+
+          '<div class="stsnip">'+snip+'</div>'+
+          '<div class="strow"><a class="src" target="_blank" rel="noopener" href="'+link+'">Open full page ⧉</a>'+
+          '<button class="src yt">▶ Check on YouTube</button>'+
+          '<button class="src use">🎬 Use as my story</button></div>';
+        div.querySelector('.yt').onclick=()=> ytOpen(phrase+' '+(state||'')+' '+(d?d.slice(0,4):''));
+        div.querySelector('.use').onclick=()=>{
+          $('story').value='Old newspaper story ('+paper+', '+date+'): '+strip((itm.ocr_eng||'').slice(0,400));
+          try{localStorage.setItem('dcr_story',$('story').value);}catch(e){}
+          toast('✓ Added to your story box — now let ✨ AI suggest searches.');
+          document.getElementById('tool').scrollIntoView({behavior:'smooth'});
+        };
+        $('slist').appendChild(div);
+      });
+    }catch(e){
+      $('sstatus').className='status err';
+      $('sstatus').innerHTML='The newspaper archive did not answer (it is sometimes slow) — try again in a minute.';
+    }
+  }
+
+  /* ---- tabs + nav ---- */
+  function switchTab(t){
+    $('tabImg').classList.toggle('on',t==='images');
+    $('tabSt').classList.toggle('on',t==='stories');
+    $('paneImages').style.display = t==='images'?'':'none';
+    $('paneStories').style.display = t==='stories'?'':'none';
+  }
+  $('tabImg').onclick=()=>switchTab('images');
+  $('tabSt').onclick=()=>switchTab('stories');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), a=>{
+    a.addEventListener('click',()=> switchTab(a.getAttribute('data-tab')));
+  });
+
+  $('go').onclick=search;
+  $('q').addEventListener('keydown',e=>{ if(e.key==='Enter') search(); });
+  $('sgo').onclick=storySearch;
+  $('sq').addEventListener('keydown',e=>{ if(e.key==='Enter') storySearch(); });
+
+  drawChips(); drawStoryChips(); refreshAiBtn();
+})();
+</script>
+</body>
+</html>
